@@ -51,11 +51,13 @@ jobs:
       - name: Build Lambda package
         working-directory: backend
         run: |
-          # Create package directory
-          mkdir -p package
-          
-          # Install dependencies directly (no Docker needed in GitHub Actions)
-          pip install -r requirements-lambda.txt -t package/
+          # Use Docker to build for Linux x86_64 (same as deploy-all.sh)
+          docker run --platform linux/amd64 --rm \
+            --entrypoint "" \
+            -v "$PWD":/var/task \
+            -w /var/task \
+            public.ecr.aws/lambda/python:3.11 \
+            pip install -r requirements-lambda.txt -t package
           
           # Copy application code
           cp -r app package/
@@ -138,7 +140,7 @@ jobs:
         run: |
           echo "🎉 Deployment Complete!"
           echo "Frontend: ${{ env.CLOUDFRONT_URL }}"
-          echo "API: ${{ env.API_URL }}"
+          echo "API: ${{ env.API_URL }}/"
           
           # Test API
           sleep 5
