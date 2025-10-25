@@ -1,0 +1,150 @@
+name: Deploy Frontend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+  workflow_run:
+    workflows: ["Deploy Backend"]
+    types:
+      - completed
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: '18'
+
+jobs:
+  deploy-frontend:
+    name: Build and Deploy Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get infrastructure outputs
+        id: get-infra
+        run: |
+          echo "::notice::Fetching infrastructure details from AWS..."
+          
+          S3_BUCKET=$(aws s3api list-buckets --query "Buckets[?contains(Name, 'workflow-builder-frontend')].Name" --output text | head -n 1)
+          API_URL=$(aws apigatewayv2 get-apis --query "Items[?contains(Name, 'workflow-builder')].ApiEndpoint" --output text | head -n 1)
+          CLOUDFRONT_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Comment, 'workflow-builder')].Id" --output text | head -n 1)
+          
+          if [ -z "$S3_BUCKET" ] || [ -z "$API_URL" ] || [ -z "$CLOUDFRONT_ID" ]; then
+            echo "::error::Failed to fetch infrastructure details. Please ensure infrastructure is deployed."
+            exit 1
+          fi
+          
+          echo "S3_BUCKET=$S3_BUCKET" >> $GITHUB_ENV
+          echo "API_URL=${API_URL}/prod" >> $GITHUB_ENV
+          echo "CLOUDFRONT_ID=$CLOUDFRONT_ID" >> $GITHUB_ENV
+          
+          echo "::notice::S3 Bucket: $S3_BUCKET"
+          echo "::notice::API URL: ${API_URL}/prod"
+          echo "::notice::CloudFront ID: $CLOUDFRONT_ID"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: |
+          echo "::notice::Installing frontend dependencies..."
+          npm ci
+
+      - name: Create production .env file
+        working-directory: frontend
+        run: |
+          echo "::notice::Creating production environment configuration..."
+          cat > .env << EOF
+          VITE_API_URL=${{ env.API_URL }}
+          VITE_APP_NAME=Workflow Builder
+          VITE_APP_VERSION=1.0.0
+          VITE_ENABLE_AI_GENERATION=true
+          VITE_ENABLE_EXPORT_PNG=true
+          VITE_ENABLE_VALIDATION=true
+          EOF
+          
+          echo "::notice::Environment file created with API URL: ${{ env.API_URL }}"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          echo "::notice::Building production frontend..."
+          npm run build
+          
+          # Show build output size
+          du -sh dist/
+          echo "::notice::Frontend build completed"
+
+      - name: Deploy to S3
+        working-directory: frontend
+        run: |
+          echo "::notice::Deploying to S3 bucket: ${{ env.S3_BUCKET }}"
+          
+          # Sync all files with long cache for assets
+          aws s3 sync dist/ s3://${{ env.S3_BUCKET }}/ \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --no-cli-pager
+          
+          # Update index.html with no-cache to ensure updates are immediate
+          aws s3 cp s3://${{ env.S3_BUCKET }}/index.html \
+            s3://${{ env.S3_BUCKET }}/index.html \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --metadata-directive REPLACE \
+            --no-cli-pager
+          
+          echo "::notice::Files deployed to S3"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          echo "::notice::Invalidating CloudFront cache..."
+          
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ env.CLOUDFRONT_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text \
+            --no-cli-pager)
+          
+          echo "::notice::CloudFront invalidation created: $INVALIDATION_ID"
+
+      - name: Get deployment URLs
+        run: |
+          CLOUDFRONT_URL=$(aws cloudfront get-distribution \
+            --id ${{ env.CLOUDFRONT_ID }} \
+            --query "Distribution.DomainName" \
+            --output text)
+          
+          echo "::notice::=========================================="
+          echo "::notice::🎉 Frontend deployed successfully!"
+          echo "::notice::=========================================="
+          echo "::notice::Frontend URL: https://$CLOUDFRONT_URL"
+          echo "::notice::API URL: ${{ env.API_URL }}"
+          echo "::notice::=========================================="
+          
+          # Test the deployment
+          echo "::notice::Testing deployment..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://$CLOUDFRONT_URL")
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "::notice::✅ Frontend is accessible (HTTP $HTTP_CODE)"
+          else
+            echo "::warning::Frontend returned HTTP $HTTP_CODE (may take a few minutes for CloudFront to update)"
+          fi

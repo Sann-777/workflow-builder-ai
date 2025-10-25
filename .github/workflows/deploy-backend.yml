@@ -1,0 +1,132 @@
+name: Deploy Backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+  workflow_run:
+    workflows: ["Deploy Infrastructure"]
+    types:
+      - completed
+
+env:
+  AWS_REGION: us-east-1
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  deploy-lambda:
+    name: Deploy Lambda Function
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Get Lambda function name
+        id: get-lambda
+        run: |
+          LAMBDA_NAME=$(aws lambda list-functions --query "Functions[?contains(FunctionName, 'workflow-builder')].FunctionName" --output text | head -n 1)
+          echo "LAMBDA_NAME=$LAMBDA_NAME" >> $GITHUB_ENV
+          echo "::notice::Lambda function: $LAMBDA_NAME"
+
+      - name: Build Lambda package with Docker (Linux x86_64)
+        working-directory: backend
+        run: |
+          # Use Docker to build package with correct platform binaries
+          docker run --platform linux/amd64 --rm \
+            --entrypoint "" \
+            -v "$PWD":/var/task \
+            -w /var/task \
+            public.ecr.aws/lambda/python:3.11 \
+            pip install -r requirements-lambda.txt -t package
+          
+          echo "::notice::Dependencies installed with correct x86_64 binaries"
+
+      - name: Package Lambda function
+        working-directory: backend
+        run: |
+          # Copy application code
+          cp -r app package/
+          cp lambda_handler.py package/
+          
+          # Create deployment package
+          cd package
+          zip -r ../lambda_deployment.zip . -x "*.pyc" "*__pycache__*" > /dev/null
+          cd ..
+          
+          # Show package size
+          SIZE=$(du -h lambda_deployment.zip | cut -f1)
+          echo "::notice::Lambda package size: $SIZE"
+
+      - name: Deploy to Lambda
+        working-directory: backend
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_NAME }} \
+            --zip-file fileb://lambda_deployment.zip \
+            --no-cli-pager
+
+      - name: Wait for Lambda update
+        run: |
+          echo "::notice::Waiting for Lambda function to update..."
+          aws lambda wait function-updated \
+            --function-name ${{ env.LAMBDA_NAME }}
+
+      - name: Update Lambda environment variables
+        run: |
+          # Get CloudFront URL for CORS
+          CLOUDFRONT_URL=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?contains(Comment, 'workflow-builder')].DomainName" \
+            --output text | head -n 1)
+          
+          aws lambda update-function-configuration \
+            --function-name ${{ env.LAMBDA_NAME }} \
+            --environment "Variables={
+              APP_NAME='Workflow Builder API',
+              APP_VERSION='1.0.0',
+              DEBUG='false',
+              ALLOWED_ORIGINS='https://$CLOUDFRONT_URL,http://localhost:3000',
+              OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY || '' }}',
+              AI_MODEL='gpt-4',
+              ENVIRONMENT='production'
+            }" \
+            --no-cli-pager
+          
+          echo "::notice::Lambda environment variables updated"
+
+      - name: Wait for configuration update
+        run: |
+          aws lambda wait function-updated \
+            --function-name ${{ env.LAMBDA_NAME }}
+
+      - name: Test Lambda function
+        run: |
+          # Get API URL
+          API_URL=$(aws apigatewayv2 get-apis \
+            --query "Items[?contains(Name, 'workflow-builder')].ApiEndpoint" \
+            --output text | head -n 1)
+          
+          echo "::notice::Testing API at: ${API_URL}/prod/"
+          
+          # Test health endpoint
+          RESPONSE=$(curl -s "${API_URL}/prod/" || echo "Failed")
+          echo "API Response: $RESPONSE"
+          
+          if echo "$RESPONSE" | grep -q "Workflow Builder API"; then
+            echo "::notice::✅ Lambda function is responding correctly"
+          else
+            echo "::warning::Lambda function response unexpected"
+          fi

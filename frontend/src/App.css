@@ -1,0 +1,221 @@
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Light Theme Default */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f5f5f5;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border-color: #e0e0e0;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --accent-color: #2196f3;
+}
+
+/* Apply theme to body */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* App Layout */
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+}
+
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.flow-container {
+  flex: 1;
+  position: relative;
+  background: var(--bg-secondary);
+}
+
+/* React Flow Container */
+.react-flow-container {
+  background: var(--bg-secondary);
+}
+
+/* Enhanced MiniMap */
+.react-flow__minimap {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.react-flow__minimap-mask {
+  fill: var(--bg-secondary) !important;
+  opacity: 0.4 !important;
+}
+
+.react-flow__minimap-node {
+  fill: var(--accent-color) !important;
+  stroke: var(--bg-primary) !important;
+  stroke-width: 2px !important;
+  rx: 4px !important;
+  ry: 4px !important;
+}
+
+/* Custom Node Styles */
+.custom-node {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--bg-primary);
+  border: 2px solid;
+  color: var(--text-primary);
+}
+
+.custom-node:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.node-actions {
+  animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+/* Executing node animation */
+.executing-node {
+  animation: executePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes executePulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(33, 150, 243, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(33, 150, 243, 0.9);
+  }
+}
+
+/* Completed node */
+.completed-node {
+  opacity: 0.8;
+}
+
+/* React Flow Controls */
+.react-flow__controls {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.react-flow__controls button {
+  border-bottom: 1px solid var(--border-color) !important;
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.react-flow__controls button:hover {
+  background: var(--bg-secondary) !important;
+}
+
+/* Background Pattern */
+.react-flow__background {
+  background-color: var(--bg-secondary);
+}
+
+.react-flow__background-pattern-dots {
+  stroke: var(--border-color) !important;
+}
+
+/* Handles */
+.react-flow__handle {
+  background: var(--accent-color) !important;
+  border: 2px solid var(--bg-primary) !important;
+}
+
+/* Edges */
+.react-flow__edge-path {
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--accent-color);
+  stroke-width: 3;
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--bg-tertiary) !important;
+  border-right: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Property Panel */
+.properties-panel {
+  background: var(--bg-tertiary) !important;
+  border-left: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
