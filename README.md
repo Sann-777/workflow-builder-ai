@@ -4,9 +4,9 @@ An interactive workflow builder with React Flow frontend and FastAPI + PydanticA
 
 ## 🌐 Live Demo
 
-**Frontend**: https://d1wjslb3r1nv2d.cloudfront.net  
-**Backend API**: https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod  
-**API Documentation**: https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod/docs
+**Frontend**: https://d17m9gez3ubf8u.cloudfront.net  
+**Backend API**: https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod  
+**API Documentation**: https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/docs
 
 ## 📸 Screenshots & Demo
 
@@ -114,7 +114,7 @@ Edit any node's properties:
 
 #### Health Check
 ```bash
-curl https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod/
+curl https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/
 ```
 
 **Response:**
@@ -130,7 +130,7 @@ curl https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod/
 
 #### Generate Workflow via API
 ```bash
-curl -X POST https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod/generate_workflow \
+curl -X POST https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/generate_workflow \
   -H "Content-Type: application/json" \
   -d '{"description":"order processing workflow with payment"}'
 ```
@@ -151,7 +151,7 @@ curl -X POST https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod/generat
 ```
 
 #### Interactive API Documentation
-Visit: https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod/docs
+Visit: https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/docs
 
 Features:
 - Swagger UI interface
@@ -517,7 +517,7 @@ curl -X POST http://localhost:8000/generate_workflow \
 
 ### Test Deployed API
 ```bash
-curl https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod/
+curl https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/
 ```
 
 ## 📊 Validation Rules
@@ -607,5 +607,5 @@ Built as a full-stack assignment demonstrating React Flow, PydanticAI, and AWS d
 
 ---
 
-**Live Demo**: https://d1wjslb3r1nv2d.cloudfront.net  
-**API**: https://dv4efwcese.execute-api.us-east-1.amazonaws.com/prod
+**Live Demo**: https://d17m9gez3ubf8u.cloudfront.net  
+**API**: https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod
