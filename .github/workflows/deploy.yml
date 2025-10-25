@@ -51,11 +51,15 @@ jobs:
       - name: Build Lambda package
         working-directory: backend
         run: |
-          # Use Docker to build for Linux x86_64 (same as deploy-all.sh)
+          # Clean up any existing package
+          rm -rf package lambda_deployment.zip
+          
+          # Use Docker to build for Linux x86_64 with proper permissions
           docker run --platform linux/amd64 --rm \
             --entrypoint "" \
             -v "$PWD":/var/task \
             -w /var/task \
+            -u $(id -u):$(id -g) \
             public.ecr.aws/lambda/python:3.11 \
             pip install -r requirements-lambda.txt -t package
           
@@ -182,18 +186,23 @@ jobs:
           
           terraform init
           
-          # Get resource names
-          FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name 2>/dev/null || echo "")
-          CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id 2>/dev/null || echo "")
-          
-          # Empty S3 bucket
-          if [ -n "$FRONTEND_BUCKET" ]; then
-            echo "Emptying S3 bucket: $FRONTEND_BUCKET"
-            aws s3 rm s3://$FRONTEND_BUCKET/ --recursive --no-cli-pager || true
+          # Get resource names if state exists
+          if terraform state list > /dev/null 2>&1; then
+            FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name 2>/dev/null || echo "")
+            CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id 2>/dev/null || echo "")
+            
+            # Empty S3 bucket
+            if [ -n "$FRONTEND_BUCKET" ]; then
+              echo "Emptying S3 bucket: $FRONTEND_BUCKET"
+              aws s3 rm s3://$FRONTEND_BUCKET/ --recursive --no-cli-pager || true
+            fi
+            
+            # Destroy all resources
+            echo "Destroying Terraform resources..."
+            terraform destroy -auto-approve \
+              -var="openai_api_key=${{ secrets.OPENAI_API_KEY || '' }}" || true
+            
+            echo "✅ Cleanup complete"
+          else
+            echo "No Terraform state found - nothing to clean up"
           fi
-          
-          # Destroy all resources
-          echo "Destroying Terraform resources..."
-          terraform destroy -auto-approve || true
-          
-          echo "✅ Cleanup complete"
