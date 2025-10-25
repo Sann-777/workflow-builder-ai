@@ -30,27 +30,31 @@ resource "aws_s3_bucket_website_configuration" "frontend" {
   }
 }
 
+# S3 Bucket Public Access Block - Keep public access blocked for security
 resource "aws_s3_bucket_public_access_block" "frontend" {
   bucket = aws_s3_bucket.frontend.id
 
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
+# S3 Bucket Policy - Allow CloudFront OAC to access
 resource "aws_s3_bucket_policy" "frontend" {
   bucket = aws_s3_bucket.frontend.id
   policy = data.aws_iam_policy_document.frontend_bucket_policy.json
+
+  depends_on = [aws_s3_bucket_public_access_block.frontend]
 }
 
 data "aws_iam_policy_document" "frontend_bucket_policy" {
   statement {
-    sid    = "PublicReadGetObject"
+    sid    = "AllowCloudFrontServicePrincipal"
     effect = "Allow"
     principals {
-      type        = "*"
-      identifiers = ["*"]
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
     }
     actions = [
       "s3:GetObject",
@@ -58,21 +62,29 @@ data "aws_iam_policy_document" "frontend_bucket_policy" {
     resources = [
       "${aws_s3_bucket.frontend.arn}/*",
     ]
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.frontend.arn]
+    }
   }
+}
+
+# CloudFront Origin Access Control
+resource "aws_cloudfront_origin_access_control" "frontend" {
+  name                              = "${local.full_project_name}-oac"
+  description                       = "OAC for ${local.full_project_name}"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
 # CloudFront Distribution for Frontend
 resource "aws_cloudfront_distribution" "frontend" {
   origin {
-    domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
-    origin_id   = "S3-${aws_s3_bucket.frontend.id}"
-
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
+    domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
+    origin_id                = "S3-${aws_s3_bucket.frontend.id}"
+    origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
   }
 
   enabled             = true
@@ -208,29 +220,46 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
+# Create a placeholder Lambda deployment package
+data "archive_file" "lambda_placeholder" {
+  type        = "zip"
+  output_path = "${path.module}/lambda_placeholder.zip"
+
+  source {
+    content  = <<EOF
+def handler(event, context):
+    return {
+        'statusCode': 200,
+        'body': '{"message": "Placeholder - deploy actual code"}'
+    }
+EOF
+    filename = "lambda_handler.py"
+  }
+}
+
 # Lambda Function
 resource "aws_lambda_function" "api" {
-  filename      = "${path.module}/lambda_deployment.zip"
   function_name = "${local.full_project_name}-api"
   role          = aws_iam_role.lambda_role.arn
   handler       = "lambda_handler.handler"
   runtime       = "python3.11"
-  timeout       = var.lambda_timeout
-  memory_size   = var.lambda_memory_size
+  timeout       = 30
+  memory_size   = 512
+
+  filename         = data.archive_file.lambda_placeholder.output_path
+  source_code_hash = data.archive_file.lambda_placeholder.output_base64sha256
 
   environment {
     variables = {
       APP_NAME        = "Workflow Builder API"
       APP_VERSION     = "1.0.0"
       DEBUG           = "false"
-      ALLOWED_ORIGINS = "https://${aws_cloudfront_distribution.frontend.domain_name},http://localhost:3000"
-      ENVIRONMENT     = var.environment
+      ALLOWED_ORIGINS = "*"
       OPENAI_API_KEY  = var.openai_api_key
-      AI_MODEL        = var.ai_model
+      AI_MODEL        = "gpt-4"
+      ENVIRONMENT     = var.environment
     }
   }
-
-  source_code_hash = fileexists("${path.module}/lambda_deployment.zip") ? filebase64sha256("${path.module}/lambda_deployment.zip") : ""
 
   tags = {
     Name        = "${local.full_project_name}-api"

@@ -28,8 +28,8 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}Error: Docker is not installed${NC}"
+if ! command -v python3 &> /dev/null; then
+    echo -e "${RED}Error: Python 3 is not installed${NC}"
     exit 1
 fi
 
@@ -62,14 +62,23 @@ cd ..
 echo -e "\n${YELLOW}=== Step 2: Deploying Backend ===${NC}"
 cd backend
 
-echo -e "${BLUE}Building Lambda package with Docker (Linux x86_64)...${NC}"
-rm -rf package
-docker run --platform linux/amd64 --rm \
-  --entrypoint "" \
-  -v "$PWD":/var/task \
-  -w /var/task \
-  public.ecr.aws/lambda/python:3.11 \
-  pip install -r requirements-lambda.txt -t package
+echo -e "${BLUE}Building Lambda package...${NC}"
+rm -rf package lambda_deployment.zip
+
+# Check if Docker is available for cross-platform build
+if command -v docker &> /dev/null; then
+    echo -e "${BLUE}Using Docker for Linux x86_64 build...${NC}"
+    docker run --platform linux/amd64 --rm \
+      --entrypoint "" \
+      -v "$PWD":/var/task \
+      -w /var/task \
+      public.ecr.aws/lambda/python:3.11 \
+      pip install -r requirements-lambda.txt -t package
+else
+    echo -e "${YELLOW}Docker not available, using local pip (may have compatibility issues)${NC}"
+    mkdir -p package
+    pip3 install -r requirements-lambda.txt -t package/
+fi
 
 echo -e "${BLUE}Packaging Lambda function...${NC}"
 cp -r app package/
@@ -144,8 +153,10 @@ npm run build
 echo -e "${BLUE}Deploying to S3...${NC}"
 aws s3 sync dist/ s3://$FRONTEND_BUCKET/ --delete --no-cli-pager
 
-# Update index.html cache control
+# Fix content-type for HTML files and set cache control
+echo -e "${BLUE}Setting correct content-type for HTML files...${NC}"
 aws s3 cp s3://$FRONTEND_BUCKET/index.html s3://$FRONTEND_BUCKET/index.html \
+  --content-type "text/html" \
   --cache-control "public, max-age=0, must-revalidate" \
   --metadata-directive REPLACE \
   --no-cli-pager
@@ -167,7 +178,7 @@ echo -e "${GREEN}🎉 DEPLOYMENT COMPLETE!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo -e ""
 echo -e "Frontend URL: ${BLUE}$CLOUDFRONT_URL${NC}"
-echo -e "API URL: ${BLUE}$API_URL${NC}"
+echo -e "API URL: ${BLUE}$API_URL${NC}/"
 echo -e "API Docs: ${BLUE}${API_URL}/docs${NC}"
 echo -e ""
 echo -e "Testing endpoints..."

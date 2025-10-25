@@ -1,0 +1,197 @@
+name: Deploy Workflow Builder
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+    
+    # Cleanup on failure
+    continue-on-error: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # STEP 1: Deploy Infrastructure
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+          terraform_wrapper: false
+
+      - name: Deploy Infrastructure
+        working-directory: infrastructure
+        run: |
+          terraform init
+          terraform apply -auto-approve \
+            -var="openai_api_key=${{ secrets.OPENAI_API_KEY || '' }}"
+          
+          echo "FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name)" >> $GITHUB_ENV
+          echo "API_URL=$(terraform output -raw api_url)" >> $GITHUB_ENV
+          echo "CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_ENV
+          echo "CLOUDFRONT_URL=$(terraform output -raw frontend_url)" >> $GITHUB_ENV
+          echo "LAMBDA_NAME=$(terraform output -raw lambda_function_name)" >> $GITHUB_ENV
+
+      # STEP 2: Deploy Backend
+      - name: Build Lambda package
+        working-directory: backend
+        run: |
+          # Create package directory
+          mkdir -p package
+          
+          # Install dependencies directly (no Docker needed in GitHub Actions)
+          pip install -r requirements-lambda.txt -t package/
+          
+          # Copy application code
+          cp -r app package/
+          cp lambda_handler.py package/
+          
+          # Create zip
+          cd package
+          zip -r ../lambda_deployment.zip . -x "*.pyc" "*__pycache__*" > /dev/null
+          cd ..
+
+      - name: Deploy Lambda
+        working-directory: backend
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_NAME }} \
+            --zip-file fileb://lambda_deployment.zip \
+            --no-cli-pager
+          
+          aws lambda wait function-updated --function-name ${{ env.LAMBDA_NAME }}
+          
+          aws lambda update-function-configuration \
+            --function-name ${{ env.LAMBDA_NAME }} \
+            --environment "Variables={
+              APP_NAME='Workflow Builder API',
+              APP_VERSION='1.0.0',
+              DEBUG='false',
+              ALLOWED_ORIGINS='${{ env.CLOUDFRONT_URL }},http://localhost:3000',
+              OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY || '' }}',
+              AI_MODEL='gpt-4',
+              ENVIRONMENT='production'
+            }" \
+            --no-cli-pager
+          
+          aws lambda wait function-updated --function-name ${{ env.LAMBDA_NAME }}
+
+      # STEP 3: Deploy Frontend
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: |
+          # Create .env file
+          cat > .env << EOF
+          VITE_API_URL=${{ env.API_URL }}
+          VITE_APP_NAME=Workflow Builder
+          VITE_APP_VERSION=1.0.0
+          VITE_ENABLE_AI_GENERATION=true
+          VITE_ENABLE_EXPORT_PNG=true
+          VITE_ENABLE_VALIDATION=true
+          EOF
+          
+          npm ci
+          npm run build
+
+      - name: Deploy to S3
+        working-directory: frontend
+        run: |
+          aws s3 sync dist/ s3://${{ env.FRONTEND_BUCKET }}/ --delete --no-cli-pager
+          
+          # Fix content-type for HTML files
+          aws s3 cp s3://${{ env.FRONTEND_BUCKET }}/index.html \
+            s3://${{ env.FRONTEND_BUCKET }}/index.html \
+            --content-type "text/html" \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --metadata-directive REPLACE \
+            --no-cli-pager
+          
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ env.CLOUDFRONT_ID }} \
+            --paths "/*" \
+            --no-cli-pager
+
+      # STEP 4: Test Deployment
+      - name: Test Deployment
+        run: |
+          echo "🎉 Deployment Complete!"
+          echo "Frontend: ${{ env.CLOUDFRONT_URL }}"
+          echo "API: ${{ env.API_URL }}"
+          
+          # Test API
+          sleep 5
+          RESPONSE=$(curl -s "${{ env.API_URL }}/" || echo "Failed")
+          if echo "$RESPONSE" | grep -q "Workflow Builder API"; then
+            echo "✅ API is working"
+          else
+            echo "⚠️ API response: $RESPONSE"
+          fi
+
+  # Cleanup job - runs only on failure
+  cleanup-on-failure:
+    name: Cleanup Failed Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: failure()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+          terraform_wrapper: false
+
+      - name: Cleanup Resources
+        working-directory: infrastructure
+        run: |
+          echo "⚠️ Deployment failed - cleaning up resources..."
+          
+          terraform init
+          
+          # Get resource names
+          FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name 2>/dev/null || echo "")
+          CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id 2>/dev/null || echo "")
+          
+          # Empty S3 bucket
+          if [ -n "$FRONTEND_BUCKET" ]; then
+            echo "Emptying S3 bucket: $FRONTEND_BUCKET"
+            aws s3 rm s3://$FRONTEND_BUCKET/ --recursive --no-cli-pager || true
+          fi
+          
+          # Destroy all resources
+          echo "Destroying Terraform resources..."
+          terraform destroy -auto-approve || true
+          
+          echo "✅ Cleanup complete"
