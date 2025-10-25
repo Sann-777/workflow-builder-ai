@@ -4,9 +4,9 @@ An interactive workflow builder with React Flow frontend and FastAPI + PydanticA
 
 ## 🌐 Live Demo
 
-**Frontend**: https://d17m9gez3ubf8u.cloudfront.net  
-**Backend API**: https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod  
-**API Documentation**: https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/docs
+**Frontend**: https://d3cjf806e76a37.cloudfront.net/ 
+**Backend API**: https://qzbeaet9y7.execute-api.us-east-1.amazonaws.com/prod/  
+**API Documentation**: https://qzbeaet9y7.execute-api.us-east-1.amazonaws.com/prod/docs
 
 ## 📸 Screenshots & Demo
 
