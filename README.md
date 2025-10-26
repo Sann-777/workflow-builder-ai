@@ -21,6 +21,22 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 
 ---
 
+## 📚 Table of Contents
+- [Project Overview](#project-overview)
+- [🌐 Live Demo](#🌐-live-demo)
+- [Architecture Summary](#architecture-summary)
+- [Deployment](#deployment)
+- [Core Features](#core-features)
+- [Local Development](#local-development)
+- [AWS Infrastructure Setup (Terraform)](#aws-infrastructure-setup-terraform)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [What This Project Demonstrates](#what-this-project-demonstrates)
+- [Future Enhancements](#future-enhancements)
+- [Author](#👤-author)
+
+---
+
 ## Architecture Summary
 
 | Layer                | Stack / Tools                                                  |
@@ -47,7 +63,7 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *Architecture Diagram (created genearted by the Workflow Builder itself using AI)*
 
 ```
-![Architecture](user-assets/workflow-builder-ai/project_workflow.png)
+![Architecture](https://raw.githubusercontent.com/Sann-777/workflow-builder-ai/main/user-assets/workflow-builder-ai/project_workflow.png)
 ```
 
 ---
