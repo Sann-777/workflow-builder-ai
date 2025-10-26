@@ -7,12 +7,13 @@ import uuid
 import os
 import json
 
-# Optional AI agent
+# Optional OpenAI
 try:
-    from pydantic_ai import Agent
+    from openai import OpenAI
     AI_AVAILABLE = True
-except Exception:
-    Agent = None
+except Exception as e:
+    print(f"OpenAI import failed: {e}")
+    OpenAI = None
     AI_AVAILABLE = False
 
 # Load environment in local/dev if .env exists
@@ -62,28 +63,20 @@ class WorkflowModel(BaseModel):
 class WorkflowRequest(BaseModel):
     description: str = Field(..., min_length=3)
 
-# --- AI agent configuration ---
+# --- AI configuration ---
 USE_AI = bool(OPENAI_API_KEY and AI_AVAILABLE)
-workflow_agent = None
+openai_client = None
 
 if USE_AI:
     try:
-        workflow_agent = Agent(
-            model=AI_MODEL,
-            result_type=WorkflowModel,
-            system_prompt=(
-                "You are a workflow generator assistant. Create workflow nodes and edges based on the user's description. "
-                "Use node types: start, end, process, decision. "
-                "Each node should have: id (unique string), type (must be 'custom'), position (x, y coordinates), "
-                "and data (with name, description, category, color, and nodeType fields). "
-                "Position nodes horizontally with 200px spacing. Start at x=100, y=100. "
-                "Node colors: start=#4caf50, end=#f44336, process=#2196f3, decision=#ff9800. "
-                "Return a valid WorkflowModel with nodes and edges arrays."
-            ),
-        )
+        import httpx
+        # Create OpenAI client with explicit httpx client to avoid proxy issues
+        http_client = httpx.Client()
+        openai_client = OpenAI(api_key=OPENAI_API_KEY, http_client=http_client)
+        print(f"OpenAI client initialized successfully with model: {AI_MODEL}")
     except Exception as e:
         USE_AI = False
-        print(f"Failed to initialize AI agent: {e}")
+        print(f"Failed to initialize OpenAI client: {e}")
 
 # --- Helper functions ---
 def _make_node(node_type: str, x=0, y=0, name: Optional[str] = None):
@@ -171,20 +164,35 @@ def generate_mock_workflow(description: str) -> WorkflowModel:
 async def generate_workflow(request: WorkflowRequest):
     """Generate a workflow from natural language description using AI or fallback logic"""
     try:
-        if USE_AI and workflow_agent is not None:
+        if USE_AI and openai_client is not None:
             try:
-                # Use PydanticAI agent to generate workflow
-                result = await workflow_agent.run(request.description)
+                # Use OpenAI to generate workflow
+                response = openai_client.chat.completions.create(
+                    model=AI_MODEL,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are a workflow generator. Create workflow JSON with nodes and edges. "
+                                "Node types: start, end, process, decision. "
+                                "Each node: {id, type, position: {x, y}, data: {name, description, category, color, type}}. "
+                                "Position nodes horizontally, 200px apart, starting at x=100, y=100. "
+                                "Colors: start=#4caf50, end=#f44336, process=#2196f3, decision=#ff9800. "
+                                "Always start with 'start' node, end with 'end' node. "
+                                "Edges: {id, source, target, type: 'smoothstep'}. "
+                                "Return ONLY valid JSON with 'nodes' and 'edges' arrays."
+                            )
+                        },
+                        {"role": "user", "content": request.description}
+                    ],
+                    response_format={"type": "json_object"},
+                    temperature=0.7
+                )
                 
-                # The result should already be a WorkflowModel
-                if isinstance(result.data, WorkflowModel):
-                    return result.data
-                elif isinstance(result.data, dict):
-                    # Try to parse as WorkflowModel
-                    return WorkflowModel(**result.data)
-                else:
-                    # Fallback if AI returns unexpected format
-                    raise ValueError("AI returned unexpected format")
+                # Parse AI response
+                ai_content = response.choices[0].message.content
+                workflow_data = json.loads(ai_content)
+                return WorkflowModel(**workflow_data)
                     
             except Exception as ai_error:
                 print(f"AI generation failed: {ai_error}, falling back to mock")
