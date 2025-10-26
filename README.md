@@ -106,7 +106,7 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 
 *AI Generation Screenshots*
 
-- <b>AI Prompmt box</b>
+- <b>AI Prompt box</b>
 ![AI Feature](./screenshots/ai_generate.png)
 - <b>AI Generated Workflow</b>
 ![AI Generated Workflow](./screenshots/ai_workflow.png)
@@ -434,9 +434,8 @@ POST /generate_workflow
 }
 ```
 
-![Shopping Cart Worklow](./screenshots/shopping_cart.png)
-
 - <b>Shopping Cart Worklow</b>
+![Shopping Cart Worklow](./screenshots/shopping_cart.png)
 
 ---
 
