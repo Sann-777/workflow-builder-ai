@@ -63,7 +63,7 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *Architecture Diagram (created genearted by the Workflow Builder itself using AI)*
 
 ```
-![Architecture](https://Sann-777.github.io/user-assets/workflow-builder-ai/project_workflow.png)
+![Architecture](./screenshots/project_workflow.png)
 ```
 
 ---
@@ -94,8 +94,8 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *Export/Import Screenshots*
 
 ```
-![Export Workflow](https://Sann-777.github.io/user-assets/workflow-builder-ai/export.png)
-![Import Workflow](https://Sann-777.github.io/user-assets/workflow-builder-ai/import.png)
+![Export Workflow](./screenshots/export.png)
+![Import Workflow](./screenshots/import.png)
 ```
 
 ### AI Workflow Generation
@@ -107,8 +107,9 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *AI Generation Screenshots*
 
 ```
-![AI Generate](https://Sann-777.github.io/user-assets/workflow-builder-ai/ai_generate.png)
-![AI Workflow](https://Sann-777.github.io/user-assets/workflow-builder-ai/ai_workflow.png)
+
+![AI Feature](./screenshots/ai_generate.png)
+![AI Generated Workflow](./screenshots/ai_workflow.png)
 ```
 
 ### Workflow Execution
@@ -119,8 +120,8 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *Execution Screenshots*
 
 ```
-![Execution](https://Sann-777.github.io/user-assets/workflow-builder-ai/execution.png)
-![Execution Status](https://Sann-777.github.io/user-assets/workflow-builder-ai/execution_status.png)
+![Execution](./screenshots/execution.png)
+![Execution Status](./screenshots/execution_status.png)
 ```
 
 ---
@@ -214,6 +215,7 @@ infrastructure/
 │   ├── outputs.tf
 │   └── providers.tf
 │   └── variables.tf
+├── screenshots/
 ├── scripts/
 │   ├── deploy-all.sh
 │   ├── destroy-all.sh
