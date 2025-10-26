@@ -5,6 +5,22 @@ It allows users to **visually design workflows** or **automatically generate the
 
 ---
 
+## 📚 Table of Contents
+- [Project Overview](#project-overview)
+- [Live Demo](#🌐-live-demo)
+- [Architecture Summary](#architecture-summary)
+- [Deployment](#deployment)
+- [Core Features](#core-features)
+- [Local Development](#local-development)
+- [AWS Infrastructure Setup (Terraform)](#aws-infrastructure-setup-terraform)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [What This Project Demonstrates](#what-this-project-demonstrates)
+- [Future Enhancements](#future-enhancements)
+- [Author](#👤-author)
+
+---
+
 ## Project Overview
 
 The goal of this project is to create a **flexible workflow builder** that merges **manual control** with **AI assistance**.
@@ -18,22 +34,6 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 
 - **FRONTEND**: https://workflowbuilder-app.netlify.app/
 - **BACKEND API**: https://workflowbuilder-api.netlify.app/
-
----
-
-## 📚 Table of Contents
-- [Project Overview](#project-overview)
-- [🌐 Live Demo](#🌐-live-demo)
-- [Architecture Summary](#architecture-summary)
-- [Deployment](#deployment)
-- [Core Features](#core-features)
-- [Local Development](#local-development)
-- [AWS Infrastructure Setup (Terraform)](#aws-infrastructure-setup-terraform)
-- [Project Structure](#project-structure)
-- [API Endpoints](#api-endpoints)
-- [What This Project Demonstrates](#what-this-project-demonstrates)
-- [Future Enhancements](#future-enhancements)
-- [Author](#👤-author)
 
 ---
 
@@ -63,7 +63,7 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *Architecture Diagram (created genearted by the Workflow Builder itself using AI)*
 
 ```
-![Architecture](https://raw.githubusercontent.com/Sann-777/workflow-builder-ai/main/user-assets/workflow-builder-ai/project_workflow.png)
+![Architecture](https://Sann-777.github.io/user-assets/workflow-builder-ai/project_workflow.png)
 ```
 
 ---
@@ -94,8 +94,8 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *Export/Import Screenshots*
 
 ```
-![Export Workflow](user-assets/workflow-builder-ai/export.png)
-![Import Workflow](user-assets/workflow-builder-ai/import.png)
+![Export Workflow](https://Sann-777.github.io/user-assets/workflow-builder-ai/export.png)
+![Import Workflow](https://Sann-777.github.io/user-assets/workflow-builder-ai/import.png)
 ```
 
 ### AI Workflow Generation
@@ -107,8 +107,8 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *AI Generation Screenshots*
 
 ```
-![AI Generate](user-assets/workflow-builder-ai/ai_generate.png)
-![AI Workflow](user-assets/workflow-builder-ai/ai_workflow.png)
+![AI Generate](https://Sann-777.github.io/user-assets/workflow-builder-ai/ai_generate.png)
+![AI Workflow](https://Sann-777.github.io/user-assets/workflow-builder-ai/ai_workflow.png)
 ```
 
 ### Workflow Execution
@@ -119,8 +119,8 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 *Execution Screenshots*
 
 ```
-![Execution](user-assets/workflow-builder-ai/execution.png)
-![Execution Status](user-assets/workflow-builder-ai/execution_status.png)
+![Execution](https://Sann-777.github.io/user-assets/workflow-builder-ai/execution.png)
+![Execution Status](https://Sann-777.github.io/user-assets/workflow-builder-ai/execution_status.png)
 ```
 
 ---
@@ -195,14 +195,17 @@ infrastructure/
 
 ```
 .
+├── .github/
+│   └── workflows/ 
+│       └── deploy.yml
 ├── backend/
 │   ├── app/main.py
 │   ├── lambda_handler.py
 │   ├── requirements*.txt
-│   └── lambda_deployment.zip
 ├── frontend/
 │   ├── src/components/
 │   ├── src/store/
+│   ├── App.css
 │   ├── App.jsx
 │   └── vite.config.js
 ├── infrastructure/
@@ -210,6 +213,7 @@ infrastructure/
 │   ├── main.tf
 │   ├── outputs.tf
 │   └── providers.tf
+│   └── variables.tf
 ├── scripts/
 │   ├── deploy-all.sh
 │   ├── destroy-all.sh
