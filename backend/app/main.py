@@ -174,11 +174,12 @@ async def generate_workflow(request: WorkflowRequest):
                             "role": "system",
                             "content": (
                                 "You are a workflow generator. Create workflow JSON with nodes and edges. "
-                                "Node types: start, end, process, decision. "
-                                "Each node: {id, type, position: {x, y}, data: {name, description, category, color, type}}. "
+                                "IMPORTANT: All nodes must have type='custom' (this is required by ReactFlow). "
+                                "Node structure: {id, type: 'custom', position: {x, y}, data: {name, description, category, color, nodeType, type}}. "
+                                "The data.nodeType and data.type fields should be: start, end, process, or decision. "
                                 "Position nodes horizontally, 200px apart, starting at x=100, y=100. "
                                 "Colors: start=#4caf50, end=#f44336, process=#2196f3, decision=#ff9800. "
-                                "Always start with 'start' node, end with 'end' node. "
+                                "Always start with a 'start' node and end with an 'end' node. "
                                 "Edges: {id, source, target, type: 'smoothstep'}. "
                                 "Return ONLY valid JSON with 'nodes' and 'edges' arrays."
                             )
