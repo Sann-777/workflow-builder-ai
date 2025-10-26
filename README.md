@@ -4,8 +4,8 @@ An interactive workflow builder with React Flow frontend and FastAPI + PydanticA
 
 ## 🌐 Live Demo
 
-- **Frontend**: https://workflowbuilder-api.netlify.app/
-- **Backend API**: https://workflowbuilder-app.netlify.app/
+- **FRONTEND**: https://workflowbuilder-app.netlify.app/
+- **BACKEND API**: https://workflowbuilder-api.netlify.app/
 - **API Documentation**: https://qzbeaet9y7.execute-api.us-east-1.amazonaws.com/prod/docs
 
 ## 📸 Screenshots & Demo
