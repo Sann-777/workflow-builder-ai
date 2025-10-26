@@ -155,6 +155,9 @@ export default function App() {
               animated: false,
               style: { stroke: '#555', strokeWidth: 3 }
             }}
+            edgesFocusable={true}
+            edgesReconnectable={true}
+            deleteKeyCode="Delete"
             snapToGrid={true}
             snapGrid={[15, 15]}
             minZoom={0.5}
