@@ -223,7 +223,23 @@ Features:
 - **Frontend**: AWS S3 + CloudFront CDN
 - **Backend**: AWS Lambda + API Gateway
 - **Infrastructure**: Terraform (Infrastructure as Code)
+- **State Management**: S3 + DynamoDB for Terraform remote state
 - **CI/CD**: GitHub Actions for automated deployment
+
+### Initial Setup (One-Time Only)
+
+**Before deploying for the first time**, you need to create the Terraform backend resources:
+
+```bash
+# Setup S3 bucket and DynamoDB table for Terraform state
+./scripts/setup-backend.sh
+```
+
+This creates:
+- S3 bucket: `workflow-builder-terraform-state` (stores Terraform state)
+- DynamoDB table: `workflow-builder-terraform-locks` (state locking)
+
+**Note**: This only needs to be run once. The script will check if resources already exist.
 
 ### Deployment Steps
 
@@ -236,7 +252,7 @@ Features:
    ```bash
    git push origin main
    ```
-   GitHub Actions will automatically deploy everything.
+   GitHub Actions will automatically deploy everything and **update existing resources** (not create new ones).
 
 3. **Deploy Locally**:
    ```bash
@@ -247,6 +263,14 @@ Features:
    ```bash
    ./scripts/destroy-all.sh
    ```
+
+### How Redeployments Work
+
+The infrastructure now uses **Terraform remote state** stored in S3. This means:
+- ✅ Redeployments **update existing resources** instead of creating new ones
+- ✅ State is shared across deployments and team members
+- ✅ State locking prevents concurrent modifications
+- ✅ No more "resource already exists" errors
 
 ### Automatic Cleanup on Failure
 If GitHub Actions deployment fails, resources are automatically cleaned up to prevent orphaned AWS resources.
@@ -308,13 +332,23 @@ uvicorn app.main:app --reload
 
 Backend will be available at: http://localhost:8000
 
-### Quick Start Script
+### Running Both Services
+
+Start backend and frontend in separate terminals:
 
 ```bash
-./scripts/local-dev.sh
-```
+# Terminal 1 - Backend
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 
-This starts both frontend and backend in development mode.
+# Terminal 2 - Frontend
+cd frontend
+npm install
+npm run dev
+```
 
 ## 📖 Usage
 
@@ -386,6 +420,10 @@ workflow-builder-test/
 │   ├── requirements.txt
 │   └── requirements-lambda.txt
 ├── infrastructure/             # Terraform IaC
+│   ├── backend-setup/         # One-time backend setup
+│   │   ├── main.tf
+│   │   ├── providers.tf
+│   │   └── README.md
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
@@ -393,10 +431,11 @@ workflow-builder-test/
 ├── .github/workflows/
 │   └── deploy.yml             # CI/CD pipeline
 ├── scripts/
+│   ├── setup-backend.sh       # Setup Terraform backend (run once)
 │   ├── deploy-all.sh          # Deploy everything
-│   ├── destroy-all.sh         # Destroy all resources
-│   └── local-dev.sh           # Local development
-└── README.md
+│   └── destroy-all.sh         # Destroy all resources
+├── README.md
+└── DEPLOYMENT_FIX.md          # Deployment fix documentation
 ```
 
 ## 🛠️ Technology Stack

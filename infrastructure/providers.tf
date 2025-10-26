@@ -1,6 +1,15 @@
 terraform {
   required_version = ">= 1.0"
   
+  # Remote state backend - uses S3 bucket created by backend-setup
+  backend "s3" {
+    bucket         = "workflow-builder-terraform-state"
+    key            = "workflow-builder/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "workflow-builder-terraform-locks"
+    encrypt        = true
+  }
+  
   required_providers {
     aws = {
       source  = "hashicorp/aws"

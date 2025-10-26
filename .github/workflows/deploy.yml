@@ -37,10 +37,14 @@ jobs:
       - name: Deploy Infrastructure
         working-directory: infrastructure
         run: |
-          terraform init
+          # Initialize Terraform with remote state backend
+          terraform init -reconfigure
+          
+          # Apply infrastructure changes (will update existing resources)
           terraform apply -auto-approve \
             -var="openai_api_key=${{ secrets.OPENAI_API_KEY || '' }}"
           
+          # Export outputs for subsequent steps
           echo "FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name)" >> $GITHUB_ENV
           echo "API_URL=$(terraform output -raw api_url)" >> $GITHUB_ENV
           echo "CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_ENV
@@ -184,7 +188,8 @@ jobs:
         run: |
           echo "⚠️ Deployment failed - cleaning up resources..."
           
-          terraform init
+          # Initialize with remote state backend
+          terraform init -reconfigure
           
           # Get resource names if state exists
           if terraform state list > /dev/null 2>&1; then
