@@ -34,6 +34,38 @@ jobs:
           terraform_version: 1.6.0
           terraform_wrapper: false
 
+      - name: Setup Terraform Backend
+        working-directory: infrastructure
+        run: |
+          # Check if S3 backend bucket exists
+          if ! aws s3 ls s3://workflow-builder-terraform-state 2>/dev/null; then
+            echo "Backend S3 bucket does not exist. Creating backend resources..."
+            
+            # Create backend resources
+            cd backend-setup
+            terraform init
+            terraform apply -auto-approve
+            cd ..
+            
+            echo "✅ Backend resources created"
+          else
+            echo "✅ Backend S3 bucket already exists"
+          fi
+          
+          # Check if DynamoDB table exists
+          if ! aws dynamodb describe-table --table-name workflow-builder-terraform-locks 2>/dev/null; then
+            echo "DynamoDB table does not exist. Creating it..."
+            
+            cd backend-setup
+            terraform init
+            terraform apply -auto-approve
+            cd ..
+            
+            echo "✅ DynamoDB table created"
+          else
+            echo "✅ DynamoDB table already exists"
+          fi
+
       - name: Deploy Infrastructure
         working-directory: infrastructure
         run: |
