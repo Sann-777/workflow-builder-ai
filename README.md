@@ -60,11 +60,10 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 | **State Persistence** | S3 + DynamoDB            | Terraform backend for safe updates                   |
 | **Redirect**          | Netlify                  | Redirects clean Netlify URL to AWS CloudFront domain |
 
-*Architecture Diagram (created genearted by the Workflow Builder itself using AI)*
+*Architecture Diagram (genearted by the Workflow Builder itself using AI)*
 
-```
+- <b>Architecture</b>
 ![Architecture](./screenshots/project_workflow.png)
-```
 
 ---
 
@@ -93,10 +92,11 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 
 *Export/Import Screenshots*
 
-```
+- <b>Export</b>
 ![Export Workflow](./screenshots/export.png)
+- <b>Import</b>
 ![Import Workflow](./screenshots/import.png)
-```
+
 
 ### AI Workflow Generation
 
@@ -106,11 +106,10 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 
 *AI Generation Screenshots*
 
-```
-
+- <b>AI Prompmt box</b>
 ![AI Feature](./screenshots/ai_generate.png)
+- <b>AI Generated Workflow</b>
 ![AI Generated Workflow](./screenshots/ai_workflow.png)
-```
 
 ### Workflow Execution
 
@@ -119,10 +118,10 @@ It demonstrates a **complete full-stack deployment** using AWS services, Terrafo
 
 *Execution Screenshots*
 
-```
+- <b>Execution Monitor</b>
 ![Execution](./screenshots/execution.png)
+- <b>Execution Status</b>
 ![Execution Status](./screenshots/execution_status.png)
-```
 
 ---
 
@@ -136,7 +135,7 @@ npm install
 npm run dev
 ```
 
-Runs at ➜ [http://localhost:5173](http://localhost:5173)
+Runs at ➜ [http://localhost:3000](http://localhost:3000)
 
 ### Backend Setup
 
@@ -437,6 +436,7 @@ POST /generate_workflow
 
 ![Shopping Cart Worklow](./screenshots/shopping_cart.png)
 
+- <b>Shopping Cart Worklow</b>
 Docs: `https://vhvkxmss40.execute-api.us-east-1.amazonaws.com/prod/docs`
 
 ---
