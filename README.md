@@ -244,7 +244,7 @@ GET /
 ```bash
 POST /generate_workflow
 {
-  "description": "Create a shopping cart workflow"
+  "description": "Create a shopping cart workflow vertically"
 }
 ```
 
@@ -252,10 +252,190 @@ POST /generate_workflow
 
 ```json
 {
-  "nodes": [...],
-  "edges": [...]
+  "nodes": [
+    {
+      "id": "start-node",
+      "type": "custom",
+      "position": {
+        "x": 45,
+        "y": 195
+      },
+      "data": {
+        "name": "Start",
+        "description": "Begin the shopping cart process",
+        "category": "Workflow",
+        "color": "#4caf50",
+        "nodeType": "start",
+        "type": "start"
+      },
+      "width": 212,
+      "height": 99,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 45,
+        "y": 195
+      },
+      "dragging": false
+    },
+    {
+      "id": "add-to-cart",
+      "type": "custom",
+      "position": {
+        "x": 100,
+        "y": 350
+      },
+      "data": {
+        "name": "Add to Cart",
+        "description": "User adds items to the shopping cart",
+        "category": "Process",
+        "color": "#2196f3",
+        "nodeType": "process",
+        "type": "process"
+      },
+      "width": 238,
+      "height": 99
+    },
+    {
+      "id": "view-cart",
+      "type": "custom",
+      "position": {
+        "x": 150,
+        "y": 510
+      },
+      "data": {
+        "name": "View Cart",
+        "description": "User views items in the shopping cart",
+        "category": "Process",
+        "color": "#2196f3",
+        "nodeType": "process",
+        "type": "process"
+      },
+      "width": 242,
+      "height": 99,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 150,
+        "y": 510
+      },
+      "dragging": false
+    },
+    {
+      "id": "checkout-decision",
+      "type": "custom",
+      "position": {
+        "x": 195,
+        "y": 660
+      },
+      "data": {
+        "name": "Checkout?",
+        "description": "User decides whether to proceed to checkout",
+        "category": "Decision",
+        "color": "#ff9800",
+        "nodeType": "decision",
+        "type": "decision"
+      },
+      "width": 286,
+      "height": 99,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 195,
+        "y": 660
+      },
+      "dragging": false
+    },
+    {
+      "id": "checkout-process",
+      "type": "custom",
+      "position": {
+        "x": 30,
+        "y": 855
+      },
+      "data": {
+        "name": "Checkout",
+        "description": "User proceeds to checkout",
+        "category": "Process",
+        "color": "#2196f3",
+        "nodeType": "process",
+        "type": "process"
+      },
+      "width": 181,
+      "height": 99,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 30,
+        "y": 855
+      },
+      "dragging": false
+    },
+    {
+      "id": "end-node",
+      "type": "custom",
+      "position": {
+        "x": 420,
+        "y": 1005
+      },
+      "data": {
+        "name": "End",
+        "description": "End of the shopping cart process",
+        "category": "Workflow",
+        "color": "#f44336",
+        "nodeType": "end",
+        "type": "end"
+      },
+      "width": 216,
+      "height": 99,
+      "selected": true,
+      "positionAbsolute": {
+        "x": 420,
+        "y": 1005
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-start-to-add-to-cart",
+      "source": "start-node",
+      "target": "add-to-cart",
+      "type": "smoothstep"
+    },
+    {
+      "id": "edge-add-to-cart-to-view-cart",
+      "source": "add-to-cart",
+      "target": "view-cart",
+      "type": "smoothstep"
+    },
+    {
+      "id": "edge-view-cart-to-checkout-decision",
+      "source": "view-cart",
+      "target": "checkout-decision",
+      "type": "smoothstep"
+    },
+    {
+      "id": "edge-checkout-decision-to-checkout-process-yes",
+      "source": "checkout-decision",
+      "target": "checkout-process",
+      "type": "smoothstep"
+    },
+    {
+      "id": "edge-checkout-decision-to-end-no",
+      "source": "checkout-decision",
+      "target": "end-node",
+      "type": "smoothstep"
+    },
+    {
+      "id": "edge-checkout-process-to-end",
+      "source": "checkout-process",
+      "target": "end-node",
+      "type": "smoothstep"
+    }
+  ],
+  "version": "1.0",
+  "exportedAt": "2025-10-26T15:49:32.418Z"
 }
 ```
+
+![Shopping Cart Worklow](./screenshots/shopping_cart.png)
 
 Docs: `https://vhvkxmss40.execute-api.us-east-1.amazonaws.com/prod/docs`
 
