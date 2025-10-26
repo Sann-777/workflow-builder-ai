@@ -41,7 +41,7 @@ const ExecutionDialog = ({ open, onClose, nodes = [], edges = [] }) => {
     ) || nodes[0]
     
     if (!startNode) {
-      setLog(prev => [...prev, { text: '❌ No start node found', type: 'error' }])
+      setLog(prev => [...prev, { text: 'No start node found', type: 'error' }])
       setExecuting(false)
       return
     }
@@ -100,13 +100,13 @@ const ExecutionDialog = ({ open, onClose, nodes = [], edges = [] }) => {
 
     if (!cancelRef.current) {
       setProgress(100)
-      setLog(prev => [...prev, { text: '✅ Workflow execution completed successfully!', type: 'success' }])
+      setLog(prev => [...prev, { text: 'Workflow execution completed successfully!', type: 'success' }])
       // Auto-close after completion
       setTimeout(() => {
         onClose()
       }, 1500)
     } else {
-      setLog(prev => [...prev, { text: '❌ Execution cancelled by user', type: 'error' }])
+      setLog(prev => [...prev, { text: 'Execution cancelled by user', type: 'error' }])
     }
 
     setExecuting(false)

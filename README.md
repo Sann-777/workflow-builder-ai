@@ -1,650 +1,266 @@
-# Workflow Builder - AI-Powered Workflow Designer
+# Workflow Builder AI
 
-An interactive workflow builder with React Flow frontend and FastAPI + PydanticAI backend. Design workflows manually or generate them using AI.
+An **interactive, AI-powered workflow designer** built with **React Flow**, **FastAPI**, and **PydanticAI** which is deployed on **AWS** using **S3, IAM, CloudFront, Lambda, API Gateway, and DynamoDB**.
+It allows users to **visually design workflows** or **automatically generate them** from a descriptions using AI.
+
+---
+
+## Project Overview
+
+The goal of this project is to create a **flexible workflow builder** that merges **manual control** with **AI assistance**.
+Users can drag and drop nodes, connect them, edit details, and even generate entire workflows automatically through text prompts using the **AI Generating** feature.
+
+It demonstrates a **complete full-stack deployment** using AWS services, Terraform, and CI/CD automation with github actions, ensuring that every push deliever the updates to production environment.
+
+---
 
 ## 🌐 Live Demo
 
 - **FRONTEND**: https://workflowbuilder-app.netlify.app/
 - **BACKEND API**: https://workflowbuilder-api.netlify.app/
-- **API Documentation**: https://qzbeaet9y7.execute-api.us-east-1.amazonaws.com/prod/docs
 
-## 📸 Screenshots & Demo
+---
 
-### Main Interface
-The workflow builder features a clean, intuitive interface with:
-- **Left Sidebar**: Draggable node types (Start, End, Process, Decision)
-- **Canvas**: Interactive workflow design area with zoom/pan
-- **Right Panel**: Property editor for selected nodes
-- **Top Bar**: Actions (Export, Import, AI Generate, Run)
+## Architecture Summary
 
-### Feature Demonstrations
+| Layer                | Stack / Tools                                                  |
+| :------------------- | :------------------------------------------------------------- |
+| **Frontend**         | React, React Flow, Redux Toolkit, Vite                         |
+| **Backend**          | FastAPI, PydanticAI                                            |
+| **Infrastructure**   | AWS (S3, CloudFront, Lambda, API Gateway, DynamoDB, Terraform) |
+| **AI Engine**        | PydanticAI Workflow Generator                                  |
+| **State Management** | Redux Toolkit + LocalStorage                                   |
+| **Terraform State**  | Stored in S3 (state) + DynamoDB (locking)                      |
+| **CI/CD**            | GitHub Actions (auto-deploy updates)                           |
 
-#### 1. Manual Workflow Creation
-Create workflows by dragging nodes from the sidebar and connecting them:
-- Drag nodes onto canvas
-- Click and drag between nodes to create connections
-- Click nodes to edit properties in right panel
-- Real-time validation feedback
+---
 
-#### 2. Export Workflow
-Export your workflow as JSON:
-1. Click **"Export JSON"** button in top bar
-2. File downloads as `workflow-{timestamp}.json`
-3. Contains complete workflow structure (nodes + edges)
+## Deployment
 
-**Example Export:**
-```json
-{
-  "nodes": [
-    {
-      "id": "1",
-      "type": "start",
-      "position": {"x": 100, "y": 100},
-      "data": {
-        "name": "Start Order",
-        "description": "Begin order processing",
-        "category": "General",
-        "color": "#4caf50"
-      }
-    }
-  ],
-  "edges": [
-    {
-      "id": "e1-2",
-      "source": "1",
-      "target": "2",
-      "type": "smoothstep"
-    }
-  ]
-}
+| Component             | Platform                 | Description                                          |
+| :-------------------- | :----------------------- | :--------------------------------------------------- |
+| **Frontend**          | AWS S3 + CloudFront      | Static React app deployed with CDN                   |
+| **Backend API**       | AWS Lambda + API Gateway | FastAPI app running serverlessly                     |
+| **State Persistence** | S3 + DynamoDB            | Terraform backend for safe updates                   |
+| **Redirect**          | Netlify                  | Redirects clean Netlify URL to AWS CloudFront domain |
+
+*Architecture Diagram (created genearted by the Workflow Builder itself using AI)*
+
+```
+![Architecture](user-assets/workflow-builder-ai/project_workflow.png)
 ```
 
-#### 3. Import Workflow
-Restore previously saved workflows:
-1. Click **"Import JSON"** button
-2. Select JSON file from your computer
-3. Workflow loads instantly into canvas
-4. All nodes, connections, and properties restored
+---
 
-#### 4. AI Workflow Generation
-Generate workflows from natural language:
-1. Click **"Generate with AI"** button
-2. Enter description: *"Create an order processing workflow with payment verification and shipping"*
-3. Click **"Generate"**
-4. AI creates complete workflow structure
-5. Edit generated workflow as needed
+## Core Features
 
-**Example AI Input:**
+### Drag-and-Drop Workflow Canvas
+
+* Node types: **Start**, **Process**, **Decision**, **End**
+* Zoom, pan, and mini-map for easy navigation
+
+### Custom Node Editor
+
+* Edit name, description, category, and color
+* Real-time updates with validation
+
+### Validation Rules
+
+* **Start Node** → No incoming edges
+* **Decision Node** → Exactly 2 outgoing edges
+* **End Node** → No outgoing edges
+
+### Export & Import
+
+* Save workflows as JSON
+* Import and restore full workflows
+
+*Export/Import Screenshots*
+
 ```
-"Create an order processing workflow with payment verification and shipping"
-```
-
-**AI Output:**
-- Start node: "Start Order"
-- Process node: "Verify Payment"
-- Decision node: "Payment Valid?"
-- Process node: "Ship Order"
-- End node: "Complete"
-- All nodes properly connected
-
-#### 5. Workflow Validation
-Real-time validation with visual feedback:
-- ✅ **Valid**: Green checkmark, workflow can run
-- ❌ **Invalid**: Red error messages with details
-  - "Start node cannot have incoming edges"
-  - "Decision node must have exactly 2 outgoing edges"
-  - "End node cannot have outgoing edges"
-
-#### 6. Workflow Execution
-Simulate workflow execution:
-1. Click **"Run Workflow"** button
-2. Nodes highlight in sequence
-3. Execution path visualized
-4. Results shown in dialog
-
-#### 7. Node Property Editing
-Edit any node's properties:
-- **Name**: Text input (e.g., "Process Payment")
-- **Description**: Textarea (e.g., "Verify credit card and process transaction")
-- **Category**: Dropdown (General, Finance, Shipping, etc.)
-- **Color**: Color picker (visual customization)
-- **Save/Cancel**: Persist or discard changes
-
-### API Testing
-
-#### Health Check
-```bash
-curl https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/
+![Export Workflow](user-assets/workflow-builder-ai/export.png)
+![Import Workflow](user-assets/workflow-builder-ai/import.png)
 ```
 
-**Response:**
-```json
-{
-  "message": "Workflow Builder API is running",
-  "app_name": "Workflow Builder API",
-  "version": "1.0.0",
-  "ai_enabled": false,
-  "ai_model": null
-}
+### AI Workflow Generation
+
+* Describe any workflow
+* FastAPI + PydanticAI backend returns structured graph JSON
+* Auto-renders in React Flow canvas
+
+*AI Generation Screenshots*
+
+```
+![AI Generate](user-assets/workflow-builder-ai/ai_generate.png)
+![AI Workflow](user-assets/workflow-builder-ai/ai_workflow.png)
 ```
 
-#### Generate Workflow via API
-```bash
-curl -X POST https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/generate_workflow \
-  -H "Content-Type: application/json" \
-  -d '{"description":"order processing workflow with payment"}'
+### Workflow Execution
+
+* Simulates step-by-step execution
+* Highlights active nodes dynamically
+
+*Execution Screenshots*
+
+```
+![Execution](user-assets/workflow-builder-ai/execution.png)
+![Execution Status](user-assets/workflow-builder-ai/execution_status.png)
 ```
 
-**Response:**
-```json
-{
-  "nodes": [
-    {"id": "...", "type": "start", "position": {...}, "data": {...}},
-    {"id": "...", "type": "process", "position": {...}, "data": {...}},
-    {"id": "...", "type": "decision", "position": {...}, "data": {...}},
-    {"id": "...", "type": "end", "position": {...}, "data": {...}}
-  ],
-  "edges": [
-    {"id": "...", "source": "...", "target": "...", "type": "smoothstep"}
-  ]
-}
-```
+---
 
-#### Interactive API Documentation
-Visit: https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/docs
-
-Features:
-- Swagger UI interface
-- Try API endpoints directly in browser
-- View request/response schemas
-- Test workflow generation with different inputs
-
-## ✨ Features
-
-### Frontend (React Flow + Material-UI)
-- **Interactive Workflow Canvas**
-  - Drag-and-drop node creation from left sidebar
-  - 4 node types: Start, End, Process, Decision
-  - Custom nodes with hover actions (delete, play)
-  - Zoom, pan, and mini-map for navigation
-  
-- **Node Property Editor**
-  - Right-side panel (20% width) for editing node properties
-  - Fields: Name (text), Description (textarea), Category (dropdown), Color (color picker)
-  - Save/Cancel buttons with validation
-  
-- **Workflow Validation**
-  - Start Node: No incoming edges allowed
-  - Decision Node: Exactly 2 outgoing edges required
-  - Real-time validation feedback
-  
-- **Export & Import**
-  - Export workflows as JSON files
-  - Import JSON files to restore workflows
-  - Workflow data persisted in localStorage
-  
-- **AI Workflow Generation**
-  - "Generate with AI" button in top bar
-  - Enter natural language description
-  - Backend generates complete workflow structure
-  - Automatically renders in canvas
-
-- **Workflow Execution**
-  - "Run Workflow" button to simulate execution
-  - Visual feedback with node highlighting
-  - Step-by-step execution monitoring
-
-### Backend (FastAPI + PydanticAI)
-- **RESTful API**
-  - `/` - Health check endpoint
-  - `/generate_workflow` - AI workflow generation
-  - `/docs` - Interactive API documentation (Swagger UI)
-  
-- **AI-Powered Generation**
-  - Uses PydanticAI for structured output
-  - Converts natural language to workflow JSON
-  - Generates nodes, edges, and connections
-  - Validates workflow structure
-
-- **Data Models**
-  - Pydantic models for Node, Edge, Workflow
-  - Type-safe API responses
-  - Automatic validation
-
-### State Management
-- Redux Toolkit for global state
-- localStorage persistence
-- Undo/Redo support
-- Real-time updates
-
-## 🚀 Deployment
-
-### Architecture
-- **Frontend**: AWS S3 + CloudFront CDN
-- **Backend**: AWS Lambda + API Gateway
-- **Infrastructure**: Terraform (Infrastructure as Code)
-- **State Management**: S3 + DynamoDB for Terraform remote state
-- **CI/CD**: GitHub Actions for automated deployment
-
-### Initial Setup (One-Time Only)
-
-**Before deploying for the first time**, you need to create the Terraform backend resources:
-
-```bash
-# Setup S3 bucket and DynamoDB table for Terraform state
-./scripts/setup-backend.sh
-```
-
-This creates:
-- S3 bucket: `workflow-builder-terraform-state` (stores Terraform state)
-- DynamoDB table: `workflow-builder-terraform-locks` (state locking)
-
-**Note**: This only needs to be run once. The script will check if resources already exist.
-
-### Deployment Steps
-
-1. **Add GitHub Secrets** (for CI/CD):
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
-   - `OPENAI_API_KEY` (optional)
-
-2. **Deploy via GitHub Actions**:
-   ```bash
-   git push origin main
-   ```
-   GitHub Actions will automatically deploy everything and **update existing resources** (not create new ones).
-
-3. **Deploy Locally**:
-   ```bash
-   ./scripts/deploy-all.sh
-   ```
-
-4. **Destroy Resources**:
-   ```bash
-   ./scripts/destroy-all.sh
-   ```
-
-### How Redeployments Work
-
-The infrastructure now uses **Terraform remote state** stored in S3. This means:
-- ✅ Redeployments **update existing resources** instead of creating new ones
-- ✅ State is shared across deployments and team members
-- ✅ State locking prevents concurrent modifications
-- ✅ No more "resource already exists" errors
-
-### Automatic Cleanup on Failure
-If GitHub Actions deployment fails, resources are automatically cleaned up to prevent orphaned AWS resources.
-
-## 💻 Local Development
-
-### Prerequisites
-- Node.js 18+
-- Python 3.11+
-- AWS CLI configured
-- Terraform 1.6+
+## Local Development
 
 ### Frontend Setup
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Create .env file
-cat > .env << EOF
-VITE_API_URL=http://localhost:8000
-VITE_APP_NAME=Workflow Builder
-VITE_APP_VERSION=1.0.0
-VITE_ENABLE_AI_GENERATION=true
-VITE_ENABLE_EXPORT_PNG=false
-VITE_ENABLE_VALIDATION=true
-EOF
-
-# Start development server
 npm run dev
 ```
 
-Frontend will be available at: http://localhost:3000
+Runs at ➜ [http://localhost:5173](http://localhost:5173)
 
 ### Backend Setup
 
 ```bash
 cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file (optional)
-cat > .env << EOF
-OPENAI_API_KEY=your_openai_api_key_here
-AI_MODEL=gpt-4
-DEBUG=true
-EOF
-
-# Start development server
-uvicorn app.main:app --reload
-```
-
-Backend will be available at: http://localhost:8000
-
-### Running Both Services
-
-Start backend and frontend in separate terminals:
-
-```bash
-# Terminal 1 - Backend
-cd backend
-python -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
-
-# Terminal 2 - Frontend
-cd frontend
-npm install
-npm run dev
 ```
 
-## 📖 Usage
+Runs at ➜ [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
-### Manual Workflow Creation
+---
 
-1. **Add Nodes**: Drag node types from left sidebar to canvas
-2. **Connect Nodes**: Click and drag from one node's edge to another
-3. **Edit Properties**: Click a node to open property panel on the right
-4. **Validate**: Check validation errors in real-time
-5. **Export**: Click "Export JSON" to download workflow
-6. **Import**: Click "Import JSON" to load saved workflow
+## AWS Infrastructure Setup (Terraform)
 
-### AI Workflow Generation
-
-1. Click **"Generate with AI"** button in top bar
-2. Enter workflow description in natural language
-   - Example: "Create an order processing workflow with payment verification"
-3. Click **"Generate"**
-4. AI generates complete workflow structure
-5. Edit generated workflow as needed
-
-### Workflow Execution
-
-1. Design or generate a workflow
-2. Click **"Run Workflow"** button
-3. Watch nodes highlight as execution progresses
-4. View execution results in dialog
-
-### Export & Import
-
-**Export Workflow:**
-```bash
-# Click "Export JSON" button
-# File downloads as: workflow-{timestamp}.json
-```
-
-**Import Workflow:**
-```bash
-# Click "Import JSON" button
-# Select previously exported JSON file
-# Workflow loads into canvas
-```
-
-## 🏗️ Project Structure
+### Structure
 
 ```
-workflow-builder-test/
-├── frontend/                   # React Flow application
-│   ├── src/
-│   │   ├── components/        # React components
-│   │   │   ├── CustomNode.jsx
-│   │   │   ├── CustomEdge.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   ├── PropertyPanel.jsx
-│   │   │   ├── TopBar.jsx
-│   │   │   ├── GenerateDialog.jsx
-│   │   │   ├── ExecutionDialog.jsx
-│   │   │   └── ExecutionMonitor.jsx
-│   │   ├── store/
-│   │   │   └── store.js       # Redux Toolkit store
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── package.json
-│   └── vite.config.js
-├── backend/                    # FastAPI + PydanticAI
-│   ├── app/
-│   │   └── main.py            # API endpoints
-│   ├── lambda_handler.py      # AWS Lambda handler
-│   ├── requirements.txt
-│   └── requirements-lambda.txt
-├── infrastructure/             # Terraform IaC
-│   ├── backend-setup/         # One-time backend setup
-│   │   ├── main.tf
-│   │   ├── providers.tf
-│   │   └── README.md
+infrastructure/
+├── backend-setup/
 │   ├── main.tf
-│   ├── variables.tf
+│   ├── providers.tf
+│   └── README.md
+├── main.tf
+├── outputs.tf
+├── providers.tf
+└── variables.tf
+```
+
+### Steps
+
+1. **Initialize Terraform Backend**
+
+   ```bash
+   ./scripts/setup-backend.sh
+   ```
+2. **Deploy Resources**
+
+   ```bash
+   ./scripts/deploy-all.sh
+   ```
+3. **Destroy Resources**
+
+   ```bash
+   ./scripts/destroy-all.sh
+   ```
+
+### Persistent State
+
+* **S3 Bucket:** Stores Terraform state
+* **DynamoDB Table:** Handles state locking
+* Ensures that **CI/CD updates existing AWS resources** instead of recreating them.
+
+---
+
+## Project Structure
+
+```
+.
+├── backend/
+│   ├── app/main.py
+│   ├── lambda_handler.py
+│   ├── requirements*.txt
+│   └── lambda_deployment.zip
+├── frontend/
+│   ├── src/components/
+│   ├── src/store/
+│   ├── App.jsx
+│   └── vite.config.js
+├── infrastructure/
+│   ├── backend-setup/
+│   ├── main.tf
 │   ├── outputs.tf
 │   └── providers.tf
-├── .github/workflows/
-│   └── deploy.yml             # CI/CD pipeline
 ├── scripts/
-│   ├── setup-backend.sh       # Setup Terraform backend (run once)
-│   ├── deploy-all.sh          # Deploy everything
-│   └── destroy-all.sh         # Destroy all resources
-├── README.md
-└── DEPLOYMENT_FIX.md          # Deployment fix documentation
+│   ├── deploy-all.sh
+│   ├── destroy-all.sh
+│   └── setup-backend.sh
+└── README.md
 ```
 
-## 🛠️ Technology Stack
+---
 
-### Frontend
-- **React 18** - UI framework
-- **React Flow** - Workflow visualization
-- **Material-UI (MUI)** - Component library
-- **Redux Toolkit** - State management
-- **Vite** - Build tool
-- **Axios** - HTTP client
-
-### Backend
-- **FastAPI** - Web framework
-- **PydanticAI** - AI agent framework
-- **Pydantic** - Data validation
-- **Uvicorn** - ASGI server
-- **OpenAI** - AI model (optional)
-
-### Infrastructure
-- **AWS S3** - Frontend hosting
-- **AWS CloudFront** - CDN
-- **AWS Lambda** - Serverless backend
-- **AWS API Gateway** - API management
-- **Terraform** - Infrastructure as Code
-- **GitHub Actions** - CI/CD
-
-## 📝 API Documentation
+## API Endpoints
 
 ### Health Check
+
 ```bash
 GET /
 ```
 
-Response:
+**Response:**
+
 ```json
-{
-  "message": "Workflow Builder API is running",
-  "app_name": "Workflow Builder API",
-  "version": "1.0.0",
-  "ai_enabled": false,
-  "ai_model": null
-}
+{"message": "Workflow Builder API is running"}
 ```
 
 ### Generate Workflow
+
 ```bash
 POST /generate_workflow
-Content-Type: application/json
-
 {
-  "description": "Create an order processing workflow"
+  "description": "Create a shopping cart workflow"
 }
 ```
 
-Response:
+**Response:**
+
 ```json
 {
-  "nodes": [
-    {
-      "id": "uuid",
-      "type": "start",
-      "position": {"x": 100, "y": 100},
-      "data": {
-        "name": "Start",
-        "description": "Start node",
-        "category": "General",
-        "color": "#4caf50",
-        "type": "start"
-      }
-    }
-  ],
-  "edges": [
-    {
-      "id": "uuid",
-      "source": "node1",
-      "target": "node2",
-      "type": "smoothstep"
-    }
-  ]
+  "nodes": [...],
+  "edges": [...]
 }
 ```
 
-## 🔒 Environment Variables
-
-### Frontend (.env)
-```env
-VITE_API_URL=https://your-api-url.com/prod
-VITE_APP_NAME=Workflow Builder
-VITE_APP_VERSION=1.0.0
-VITE_ENABLE_AI_GENERATION=true
-VITE_ENABLE_EXPORT_PNG=false
-VITE_ENABLE_VALIDATION=true
-```
-
-### Backend (.env)
-```env
-OPENAI_API_KEY=sk-...
-AI_MODEL=gpt-4
-DEBUG=false
-ALLOWED_ORIGINS=https://your-frontend-url.com
-ENVIRONMENT=production
-```
-
-## 🧪 Testing
-
-### Test API Locally
-```bash
-curl http://localhost:8000/
-```
-
-### Test Workflow Generation
-```bash
-curl -X POST http://localhost:8000/generate_workflow \
-  -H "Content-Type: application/json" \
-  -d '{"description":"order processing workflow"}'
-```
-
-### Test Deployed API
-```bash
-curl https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod/
-```
-
-## 📊 Validation Rules
-
-- **Start Node**: Must have no incoming edges
-- **End Node**: Must have no outgoing edges
-- **Decision Node**: Must have exactly 2 outgoing edges
-- **Process Node**: Can have any number of edges
-- **No Cycles**: Workflows must be acyclic (DAG)
-
-## 🎨 Node Types
-
-| Type | Color | Description | Validation |
-|------|-------|-------------|------------|
-| Start | Green (#4caf50) | Workflow entry point | No incoming edges |
-| End | Red (#f44336) | Workflow exit point | No outgoing edges |
-| Process | Blue (#2196f3) | Processing step | Any edges |
-| Decision | Orange (#ff9800) | Conditional branch | Exactly 2 outgoing |
-
-## 💰 AWS Cost Estimate
-
-**Monthly costs** (assuming moderate usage):
-- S3: ~$0.50
-- CloudFront: $5-20
-- Lambda: $1-10
-- API Gateway: $1-5
-
-**Total**: $10-40/month
-
-**GitHub Actions**: Free (2,000 minutes/month)
-
-## 🐛 Troubleshooting
-
-### Frontend Not Loading
-```bash
-# Check CloudFront distribution
-aws cloudfront list-distributions
-
-# Invalidate cache
-aws cloudfront create-invalidation --distribution-id YOUR_ID --paths "/*"
-```
-
-### API Returning 404
-```bash
-# Check Lambda function
-aws lambda list-functions
-
-# View logs
-aws logs tail /aws/lambda/workflow-builder-prod-api --follow
-```
-
-### Deployment Failed
-```bash
-# Cleanup resources
-./scripts/destroy-all.sh
-
-# Redeploy
-./scripts/deploy-all.sh
-```
-
-### GitHub Actions Cleanup
-If deployment fails in GitHub Actions, resources are automatically cleaned up. Check the "Cleanup Failed Deployment" job in the Actions tab.
-
-## 📚 Additional Resources
-
-- [React Flow Documentation](https://reactflow.dev/)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [PydanticAI Documentation](https://ai.pydantic.dev/)
-- [AWS Lambda Documentation](https://docs.aws.amazon.com/lambda/)
-- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test locally
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - feel free to use this project for learning or commercial purposes.
-
-## 👨‍💻 Author
-
-Built as a full-stack assignment demonstrating React Flow, PydanticAI, and AWS deployment.
+Docs: `https://vhvkxmss40.execute-api.us-east-1.amazonaws.com/prod/docs`
 
 ---
 
-**Live Demo**: https://d17m9gez3ubf8u.cloudfront.net  
-**API**: https://zs21zfb3p6.execute-api.us-east-1.amazonaws.com/prod
+## What This Project Demonstrates
+
+* Frontend + backend integration with **React Flow** and **FastAPI**
+* **AI-powered** workflow generation via **PydanticAI**
+* **Infrastructure-as-Code (IaC)** using Terraform
+* **AWS Serverless deployment** (S3, CloudFront, Lambda, API Gateway)
+* **Persistent CI/CD** through Terraform state management
+* **Clean code organization** for production-ready deployment
+
+---
+
+## Future Enhancements
+
+* AI-assisted **editing** of existing workflows
+* Export workflows as **PNG/SVG**
+* Add **authentication & user accounts**
+* Convert deployment to **EKS or ECS** for scalability
+
+---
+
+## 👤 Author
+
+Developed by **Sandeep Singh**
+
+> A full-stack project demonstrating AI-driven workflow automation, AWS deployment, and infrastructure management using Terraform.

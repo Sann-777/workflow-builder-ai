@@ -2,10 +2,6 @@
 
 This directory contains the Terraform configuration for creating the S3 bucket and DynamoDB table used for storing Terraform state.
 
-## ⚠️ Important
-
-**This setup should only be run ONCE** when initially setting up the infrastructure. It should NOT be run on every deployment.
-
 ## Resources Created
 
 - **S3 Bucket**: `workflow-builder-terraform-state` - Stores Terraform state files
