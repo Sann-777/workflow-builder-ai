@@ -107,7 +107,7 @@ aws lambda update-function-configuration \
     DEBUG='false',
     ALLOWED_ORIGINS='$CLOUDFRONT_URL,http://localhost:3000',
     OPENAI_API_KEY='${OPENAI_API_KEY:-}',
-    AI_MODEL='gpt-4',
+    AI_MODEL='gpt-4o-mini',
     ENVIRONMENT='production'
   }" \
   --no-cli-pager > /dev/null

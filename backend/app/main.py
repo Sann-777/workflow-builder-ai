@@ -29,7 +29,7 @@ APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-AI_MODEL = os.getenv("AI_MODEL", "gpt-4")
+AI_MODEL = os.getenv("AI_MODEL", "gpt-4o-mini")
 
 # Use root_path for API Gateway stage
 app = FastAPI(title=APP_NAME, version=APP_VERSION, debug=DEBUG, root_path="/prod")
