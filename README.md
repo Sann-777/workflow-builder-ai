@@ -437,7 +437,6 @@ POST /generate_workflow
 ![Shopping Cart Worklow](./screenshots/shopping_cart.png)
 
 - <b>Shopping Cart Worklow</b>
-Docs: `https://vhvkxmss40.execute-api.us-east-1.amazonaws.com/prod/docs`
 
 ---
 
