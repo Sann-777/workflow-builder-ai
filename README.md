@@ -229,22 +229,27 @@ infrastructure/
 ### Health Check
 
 ```bash
-GET /
+curl -X GET https://vhvkxmss40.execute-api.us-east-1.amazonaws.com/prod/
 ```
 
 **Response:**
 
 ```json
-{"message": "Workflow Builder API is running"}
+{
+  "message":"Workflow Builder API is running",
+  "app_name":"Workflow Builder API",
+  "version":"1.0.0",
+  "ai_enabled":true,
+  "ai_model":"gpt-4o-mini"
+}
 ```
 
 ### Generate Workflow
 
 ```bash
-POST /generate_workflow
-{
-  "description": "Create a shopping cart workflow vertically"
-}
+curl -X POST https://workflowbuilder-api.netlify.app/generate_workflow \
+  -H "Content-Type: application/json" \                                         
+  -d '{"description":"Create a shopping cart workflow vertically"}'
 ```
 
 **Response:**
